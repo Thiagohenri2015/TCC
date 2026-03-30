@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prateleiras</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-image: url('assets/telaMenu.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+      color: #fff;
+      overflow-x: hidden;
+    }
+    .container {
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 30px;
+      margin-top: 80px;
+      backdrop-filter: blur(10px);
+    }
+    .btn-voltar {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background-color: #1b4acc;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-weight: 600;
+      transition: background-color 0.3s ease;
+    }
+    .btn-voltar:hover {
+      background-color: #163ca3;
+    }
+    .table {
+      background-color: rgba(255, 255, 255, 0.05);
+      color: white;
+    }
+    .table thead {
+      color: #306bff;
+    }
+    .modal-content {
+      background-color: #f0f8ff;
+      color: #000;
+    }
+    .form-control {
+      border-radius: 10px;
+    }
+    .btn-azul {
+      background-color: #306bff;
+      color: white;
+    }
+    .btn-azul:hover {
+      background-color: #1b4acc;
+    }
+    .loading {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+    }
+    .spinner-border {
+      width: 3rem;
+      height: 3rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="loading">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <button class="btn btn-voltar" onclick="voltar()">Voltar</button>
+
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="text-white">Gerenciar Prateleiras</h2>
+      <button class="btn btn-azul" onclick="abrirModalCriar()">Criar Prateleira</button>
+    </div>
+
+    <input type="text" id="filtroNome" class="form-control mb-3" placeholder="Filtrar por nome" oninput="filtrarTabela()" />
+
+    <table class="table table-hover table-bordered rounded">
+      <thead>
+        <tr>
+          <th>Descrição</th>
+          <th>Quadra</th>
+          <th>Lote</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaPrateleiras">
+        <!-- Conteúdo dinâmico -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal Criar/Editar -->
+  <div class="modal fade" id="modalCriar" tabindex="-1" aria-labelledby="modalCriarLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <form class="modal-content" onsubmit="salvarPrateleira(event)">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalCriarLabel">Prateleira</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="inputId">
+          <input type="text" id="inputDescricao" class="form-control mb-3" placeholder="Descrição" required />
+          <input type="number" id="inputQuadra" class="form-control mb-3" placeholder="Quadra" required min="1" />
+          <input type="number" id="inputLote" class="form-control mb-3" placeholder="Lote" required min="1" />
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-azul">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let linhaEditando = null;
+    let prateleiraEditando = null;
+
+    // Mostrar loading
+    function showLoading() {
+      document.querySelector('.loading').style.display = 'flex';
+    }
+
+    // Esconder loading
+    function hideLoading() {
+      document.querySelector('.loading').style.display = 'none';
+    }
+
+    // Função para exibir mensagem de erro
+    function showError(message) {
+      alert('Erro: ' + message);
+    }
+
+    // Função para buscar todas as prateleiras
+    async function carregarPrateleiras() {
+      showLoading();
+      try {
+        const response = await fetch('/prateleiras');
+        const data = await response.json();
+        
+        if (data.status && data.prateleiras) {
+          const tbody = document.getElementById('tabelaPrateleiras');
+          tbody.innerHTML = '';
+          
+          data.prateleiras.forEach(p => {
+            const linha = document.createElement('tr');
+            linha.setAttribute('data-id', p.idTblPrateleiras);
+            linha.innerHTML = `
+              <td>${p.strDescricao}</td>
+              <td>${p.intQuadra}</td>
+              <td>${p.intLote}</td>
+              <td>
+                <button class="btn btn-sm btn-warning me-1" onclick="abrirModalEditar(this)">Editar</button>
+                <button class="btn btn-sm btn-danger" onclick="excluirPrateleira(this)">Excluir</button>
+              </td>
+            `;
+            tbody.appendChild(linha);
+          });
+        } else {
+          showError(data.msg || 'Erro ao carregar prateleiras');
+        }
+      } catch (error) {
+        console.error('Erro ao carregar prateleiras:', error);
+        showError('Erro ao conectar com o servidor');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    function voltar() {
+      window.location.href = 'menu.html';
+    }
+
+    function filtrarTabela() {
+      const filtro = document.getElementById('filtroNome').value.toLowerCase();
+      const linhas = document.querySelectorAll('#tabelaPrateleiras tr');
+      linhas.forEach(linha => {
+        const descricao = linha.querySelector('td').textContent.toLowerCase();
+        linha.style.display = descricao.includes(filtro) ? '' : 'none';
+      });
+    }
+
+    function abrirModalCriar() {
+      linhaEditando = null;
+      prateleiraEditando = null;
+      document.getElementById('inputId').value = '';
+      document.getElementById('inputDescricao').value = '';
+      document.getElementById('inputQuadra').value = '';
+      document.getElementById('inputLote').value = '';
+      document.getElementById('modalCriarLabel').textContent = 'Criar Prateleira';
+      const modal = new bootstrap.Modal(document.getElementById('modalCriar'));
+      modal.show();
+    }
+
+    function abrirModalEditar(botaoEditar) {
+      const linha = botaoEditar.closest('tr');
+      const id = linha.getAttribute('data-id');
+      const descricao = linha.cells[0].textContent;
+      const quadra = linha.cells[1].textContent;
+      const lote = linha.cells[2].textContent;
+
+      document.getElementById('inputId').value = id;
+      document.getElementById('inputDescricao').value = descricao;
+      document.getElementById('inputQuadra').value = quadra;
+      document.getElementById('inputLote').value = lote;
+
+      document.getElementById('modalCriarLabel').textContent = 'Editar Prateleira';
+      linhaEditando = linha;
+      prateleiraEditando = { id, descricao, quadra, lote };
+
+      const modal = new bootstrap.Modal(document.getElementById('modalCriar'));
+      modal.show();
+    }
+
+    async function salvarPrateleira(event) {
+      event.preventDefault();
+      showLoading();
+
+      const id = document.getElementById('inputId').value;
+      const descricao = document.getElementById('inputDescricao').value;
+      const quadra = document.getElementById('inputQuadra').value;
+      const lote = document.getElementById('inputLote').value;
+
+      const prateleiraData = {
+        prateleira: {
+          strDescricao: descricao,
+          intQuadra: parseInt(quadra),
+          intLote: parseInt(lote)
+        }
+      };
+
+      try {
+        let response;
+        if (id) {
+          // Edição
+          response = await fetch(`/prateleiras/${id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(prateleiraData)
+          });
+        } else {
+          // Criação
+          response = await fetch('/prateleiras', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(prateleiraData)
+          });
+        }
+
+        const data = await response.json();
+
+        if (data.status) {
+          carregarPrateleiras();
+          const modal = bootstrap.Modal.getInstance(document.getElementById('modalCriar'));
+          modal.hide();
+        } else {
+          showError(data.msg || 'Erro ao salvar prateleira');
+        }
+      } catch (error) {
+        console.error('Erro ao salvar prateleira:', error);
+        showError('Erro ao conectar com o servidor');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    async function excluirPrateleira(botaoExcluir) {
+      if (!confirm('Tem certeza que deseja excluir esta prateleira?')) {
+        return;
+      }
+
+      const linha = botaoExcluir.closest('tr');
+      const id = linha.getAttribute('data-id');
+      
+      showLoading();
+      try {
+        const response = await fetch(`/prateleiras/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.status) {
+          carregarPrateleiras();
+        } else {
+          showError(data.msg || 'Erro ao excluir prateleira');
+        }
+      } catch (error) {
+        console.error('Erro ao excluir prateleira:', error);
+        showError('Erro ao conectar com o servidor');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // Carrega as prateleiras quando a página é carregada
+    document.addEventListener('DOMContentLoaded', carregarPrateleiras);
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

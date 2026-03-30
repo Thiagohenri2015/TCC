@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login - Sistema de Estoque</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    font-family: 'Segoe UI', sans-serif;
+    overflow: hidden;
+    position: relative;
+    background-color: #1e1e2f;
+  }
+
+  .parallax-bg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100vw;          /* ocupa toda a largura da viewport */
+    height: 100vh;         /* ocupa toda a altura da viewport */
+    transform: translate(-50%, -50%);
+    background-image: url('assets/estoque-parallax.png'); /* caminho relativo */
+    background-size: cover;  /* cobre toda a área */
+    background-repeat: no-repeat;
+    background-position: center;
+    will-change: transform;
+    z-index: 0;
+    transition: transform 0.1s ease-out;
+  }
+
+
+  .login-container {
+    position: relative;
+    z-index: 1;
+    background-color: rgba(255, 255, 255, 0.85);
+    padding: 3rem;
+    border-radius: 16px;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    margin: auto;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  h2 {
+    color: #2E3A59;
+    margin-bottom: 1.5rem;
+  }
+
+  input {
+    width: 100%;
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+  }
+
+  button {
+    background-color: #A1E44D;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  button:hover {
+    background-color: #8cd12f;
+  }
+
+  .error {
+    color: red;
+    margin-top: 1rem;
+  }
+</style>
+</head>
+<body>
+  <div class="parallax-bg" id="parallaxBg"></div>
+
+  <div class="login-container">
+    <h2>Login no Sistema</h2>
+    <form id="loginForm">
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="password" id="senha" placeholder="Senha" required />
+      <button type="submit">Entrar</button>
+    </form>
+    <div id="erro" class="error"></div>
+  </div>
+
+  <script>
+    // Efeito Parallax com o mouse
+    document.addEventListener('mousemove', (e) => {
+    const bg = document.getElementById('parallaxBg');
+    const x = (e.clientX / window.innerWidth - 0.6) * 20;
+    const y = (e.clientY / window.innerHeight - 0.6) * 20;
+    bg.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+    });
+
+
+    // Validação de login
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value;
+      const senha = document.getElementById('senha').value;
+
+      const response = await fetch('http://localhost:80/usuarios/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          usuario: { email, senha }
+        })
+      });
+
+      const result = await response.json();
+      console.log(response);
+
+      if (response.ok && result.status) {
+        localStorage.setItem('token', result.token);
+        window.location.href = '/menu'; 
+      } else {
+        document.getElementById('erro').textContent = result.msg || 'Erro ao logar.';
+      }
+    });
+  </script>
+</body>
+</html>

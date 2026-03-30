@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Operações</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-image: url('assets/telaMenu.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      min-height: 100vh;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    .container {
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 30px;
+      margin-top: 80px;
+      backdrop-filter: blur(10px);
+    }
+    .btn-voltar {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background-color: #1b4acc;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-weight: 600;
+      transition: background-color 0.3s ease;
+    }
+    .btn-voltar:hover {
+      background-color: #163ca3;
+    }
+    .table {
+      background-color: rgba(255, 255, 255, 0.05);
+      color: white;
+    }
+    .table thead {
+      color: #306bff;
+    }
+    .modal-content {
+      background-color: #f0f8ff;
+      color: #000;
+    }
+    .form-control, .form-select {
+      border-radius: 10px;
+    }
+    .btn-azul {
+      background-color: #306bff;
+      color: white;
+    }
+    .btn-azul:hover {
+      background-color: #1b4acc;
+    }
+    .loading {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+    }
+    .spinner-border {
+      width: 3rem;
+      height: 3rem;
+    }
+    .pagination {
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="loading">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <button class="btn btn-voltar" onclick="voltar()">Voltar</button>
+
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="text-white">Registro de Operações</h2>
+      <button class="btn btn-azul" onclick="abrirModalCriar()">Nova Operação</button>
+    </div>
+
+    <table class="table table-hover table-bordered rounded">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Usuário</th>
+          <th>Tipo</th>
+          <th>Data</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaOperacoes">
+        <!-- Conteúdo dinâmico -->
+      </tbody>
+    </table>
+
+    <nav aria-label="Page navigation">
+      <ul class="pagination" id="paginacao">
+        <!-- Paginação será gerada aqui -->
+      </ul>
+    </nav>
+  </div>
+
+  <!-- Modal Criar Operação -->
+  <div class="modal fade" id="modalCriar" tabindex="-1" aria-labelledby="modalCriarLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <form class="modal-content" onsubmit="salvarOperacao(event)">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalCriarLabel">Nova Operação</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Tipo de Operação</label>
+            <select id="inputTipo" class="form-select" required>
+              <option value="ENTRADA">Entrada</option>
+              <option value="SAIDA">Saída</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Item</label>
+            <select id="inputItem" class="form-select" required>
+              <option value="">Carregando itens...</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Usuário</label>
+            <select id="inputUsuario" class="form-select" required>
+              <option value="">Carregando usuários...</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-azul">Registrar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let operacoes = [];
+    let itens = [];
+    let usuarios = [];
+    let paginaAtual = 1;
+    const itensPorPagina = 10;
+
+    // Mostrar loading
+    function showLoading() {
+      document.querySelector('.loading').style.display = 'flex';
+    }
+
+    // Esconder loading
+    function hideLoading() {
+      document.querySelector('.loading').style.display = 'none';
+    }
+
+    // Função para exibir mensagem de erro
+    function showError(message) {
+      alert('Erro: ' + message);
+    }
+
+    function voltar() {
+      window.location.href = 'menu.html';
+    }
+
+    // Função para buscar todas as operações
+    async function carregarOperacoes() {
+      showLoading();
+      try {
+        const response = await fetch('/operacoes');
+        const data = await response.json();
+        
+        if (data.status && data.operacoes) {
+          operacoes = data.operacoes;
+          renderizarTabela();
+          renderizarPaginacao();
+        } else {
+          showError(data.msg || 'Erro ao carregar operações');
+        }
+      } catch (error) {
+        console.error('Erro ao carregar operações:', error);
+        showError('Erro ao conectar com o servidor');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // Função para buscar todos os itens
+    async function carregarItens() {
+      try {
+        const response = await fetch('/itens');
+        const data = await response.json();
+        
+        if (data.status && data.itens) {
+          itens = data.itens;
+          const select = document.getElementById('inputItem');
+          select.innerHTML = '';
+          
+          itens.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.idTblItens;
+            option.textContent = item.strNome;
+            select.appendChild(option);
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao carregar itens:', error);
+      }
+    }
+
+    // Função para buscar todos os usuários
+    async function carregarUsuarios() {
+      try {
+        const response = await fetch('/usuarios');
+        const data = await response.json();
+        
+        if (data.status && data.usuarios) {
+          usuarios = data.usuarios;
+          const select = document.getElementById('inputUsuario');
+          select.innerHTML = '';
+          
+          usuarios.forEach(usuario => {
+            const option = document.createElement('option');
+            option.value = usuario.idTblUsuario;
+            option.textContent = usuario.strNome;
+            select.appendChild(option);
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao carregar usuários:', error);
+      }
+    }
+
+    function renderizarTabela() {
+      const tbody = document.getElementById('tabelaOperacoes');
+      tbody.innerHTML = '';
+      
+      const inicio = (paginaAtual - 1) * itensPorPagina;
+      const fim = inicio + itensPorPagina;
+      const operacoesPagina = operacoes.slice(inicio, fim);
+      
+      operacoesPagina.forEach(op => {
+        const tr = document.createElement('tr');
+        
+        // Encontrar item correspondente
+        const item = itens.find(i => i.idTblItens === op.tblitens_idtblItens) || { strNome: 'Desconhecido' };
+        
+        // Encontrar usuário correspondente
+        const usuario = usuarios.find(u => u.idTblUsuario === op.tblusuarios_idTblUsuario) || { strNome: 'Desconhecido' };
+        
+        tr.innerHTML = `
+          <td>${item.strNome}</td>
+          <td>${usuario.strNome}</td>
+          <td>${op.strCodigoEvento}</td>
+          <td>${new Date(op.datDataOperacao).toLocaleString()}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderizarPaginacao() {
+      const ul = document.getElementById('paginacao');
+      ul.innerHTML = '';
+      
+      const totalPaginas = Math.ceil(operacoes.length / itensPorPagina);
+      
+      for (let i = 1; i <= totalPaginas; i++) {
+        const li = document.createElement('li');
+        li.className = `page-item ${i === paginaAtual ? 'active' : ''}`;
+        li.innerHTML = `<a class="page-link" href="javascript:mudarPagina(${i})">${i}</a>`;
+        ul.appendChild(li);
+      }
+    }
+
+    function mudarPagina(pagina) {
+      paginaAtual = pagina;
+      renderizarTabela();
+      renderizarPaginacao();
+    }
+
+    function abrirModalCriar() {
+      const modal = new bootstrap.Modal(document.getElementById('modalCriar'));
+      modal.show();
+    }
+
+    async function salvarOperacao(event) {
+      event.preventDefault();
+      showLoading();
+      
+      const tipoOperacao = document.getElementById('inputTipo').value;
+      const itemId = document.getElementById('inputItem').value;
+      const usuarioId = document.getElementById('inputUsuario').value;
+      
+      const operacaoData = {
+        operacao: {
+          item: { idItem: parseInt(itemId) },
+          usuario: { idUsuario: parseInt(usuarioId) },
+          codigoEvento: tipoOperacao
+        }
+      };
+
+      try {
+        const response = await fetch('/operacoes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify(operacaoData)
+        });
+
+        const data = await response.json();
+
+        if (data.status) {
+          // Fechar modal e recarregar dados
+          const modal = bootstrap.Modal.getInstance(document.getElementById('modalCriar'));
+          modal.hide();
+          await carregarOperacoes();
+        } else {
+          showError(data.msg || 'Erro ao registrar operação');
+        }
+      } catch (error) {
+        console.error('Erro ao salvar operação:', error);
+        showError('Erro ao conectar com o servidor');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // Carregar dados quando a página é carregada
+    document.addEventListener('DOMContentLoaded', async () => {
+      await carregarItens();
+      await carregarUsuarios();
+      await carregarOperacoes();
+    });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Gerenciar Usuário</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <style>
+    body {
+      background-image: url('assets/telaMenu.png');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      min-height: 100vh;
+      font-family: 'Rubik', sans-serif;
+    }
+
+    h1, h2, .card-title {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    .form-container {
+      max-width: 800px;
+      margin: 30px auto;
+      background-color: rgba(255, 255, 255, 0.9);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+
+    .table-container {
+      margin: 30px auto;
+      max-width: 1000px;
+      background-color: rgba(255, 255, 255, 0.9);
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+
+    .table thead {
+      background-color: #dee5ff;
+    }
+
+    .table th {
+      font-weight: 500;
+    }
+
+    .actions-column {
+      width: 120px;
+      text-align: center;
+    }
+
+    .search-container {
+      margin-bottom: 20px;
+    }
+
+    .pagination-container {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .btn-primary {
+      background-color: #306bff;
+      border-color: #306bff;
+      font-weight: 500;
+    }
+
+    .btn-primary:hover {
+      background-color: #1b4acc;
+      border-color: #1b4acc;
+    }
+
+    .btn-success {
+      background-color: #28a745;
+      border-color: #28a745;
+      font-weight: 500;
+    }
+
+    .btn-success:hover {
+      background-color: #218838;
+      border-color: #218838;
+    }
+
+    .btn-danger {
+      background-color: #dc3545;
+      border-color: #dc3545;
+      font-weight: 500;
+    }
+
+    .btn-danger:hover {
+      background-color: #c82333;
+      border-color: #c82333;
+    }
+
+    .modal-content {
+      border-radius: 12px;
+    }
+
+    .modal-header {
+      background-color: #306bff;
+      color: white;
+      border-top-left-radius: 12px;
+      border-top-right-radius: 12px;
+    }
+
+    .modal-footer .btn {
+      min-width: 100px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Botão Voltar no topo da página -->
+<div class="container mt-3">
+  <button id="btnVoltar" class="btn btn-secondary">
+    <i class="bi bi-arrow-left"></i> Voltar ao Menu Principal
+  </button>
+</div>
+
+<div class="form-container">
+  <h2 class="mb-4 text-center" id="tituloFormulario">Criar Novo Usuário</h2>
+  
+  <form id="formUsuario">
+    <input type="hidden" id="idUsuario" name="idUsuario">
+    
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="nomeUsuario" class="form-label">Nome</label>
+        <input type="text" class="form-control" id="nomeUsuario" name="nomeUsuario" required>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label for="email" class="form-label">E-mail</label>
+        <input type="email" class="form-control" id="email" name="email" required>
+      </div>
+    </div>
+    
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="senha" class="form-label">Senha</label>
+        <input type="password" class="form-control" id="senha" name="senha">
+        <small class="text-muted">Deixe em branco para manter a senha atual (apenas para edição)</small>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label for="cpf" class="form-label">CPF</label>
+        <input type="text" class="form-control" id="cpf" name="cpf" maxlength="11" required>
+      </div>
+    </div>
+    
+    <div class="mb-3">
+      <label for="tipoUsuario" class="form-label">Tipo de Usuário</label>
+      <select class="form-select" id="tipoUsuario" name="tipoUsuario" required>
+        <option value="">Selecione</option>
+      </select>
+    </div>
+    
+    <div class="d-flex justify-content-end">
+      <button type="button" class="btn btn-secondary me-2" id="btnCancelar" style="display: none;">Cancelar</button>
+      <button type="submit" class="btn btn-primary" id="btnSubmit">Criar Usuário</button>
+    </div>
+  </form>
+</div>
+
+<div class="form-container table-container">
+  <div class="header-container">
+    <h3>Usuários Cadastrados</h3>
+    <div class="search-container">
+      <div class="input-group">
+        <input type="text" class="form-control" id="inputBusca" placeholder="Buscar por nome...">
+        <button class="btn btn-outline-secondary" type="button" id="btnBuscar">
+          <i class="bi bi-search"></i>
+        </button>
+        <button class="btn btn-outline-secondary" type="button" id="btnLimparBusca">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="table-responsive">
+    <table class="table table-striped table-hover">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nome</th>
+          <th>E-mail</th>
+          <th>CPF</th>
+          <th>Tipo</th>
+          <th class="actions-column">Ações</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaUsuarios">
+        <!-- Dados serão preenchidos via JavaScript -->
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="pagination-container">
+    <nav aria-label="Page navigation">
+      <ul class="pagination" id="paginacao">
+        <!-- Paginação será gerada via JavaScript -->
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="confirmacaoExclusao" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirmar Exclusão</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Tem certeza que deseja excluir este usuário?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-danger" id="btnConfirmarExclusao">Excluir</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Variáveis globais
+  let modoEdicao = false;
+  let usuarioAtual = null;
+  let usuarioParaExcluir = null;
+  let todosUsuarios = [];
+  let usuariosFiltrados = [];
+  let paginaAtual = 1;
+  const itensPorPagina = 10;
+  const modalConfirmacao = new bootstrap.Modal(document.getElementById('confirmacaoExclusao'));
+
+  // Função para voltar ao menu principal
+  function voltarAoMenu() {
+    window.location.href = 'menu.html';
+  }
+
+  // Função para carregar tipos de usuário
+  async function carregarTiposDeUsuario() {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:80/tipos-usuarios', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+      const tiposUsuarios = data.tiposUsuarios;
+
+      if (!response.ok || !Array.isArray(tiposUsuarios)) {
+        console.error('Erro ao carregar tipos de usuário:', data);
+        return;
+      }
+
+      const select = document.getElementById('tipoUsuario');
+      select.innerHTML = '<option value="">Selecione</option>';
+
+      tiposUsuarios.forEach(tipo => {
+        const option = document.createElement('option');
+        option.value = tipo.idTblTipoUsuarios;
+        option.textContent = tipo.strDescricao;
+        select.appendChild(option);
+      });
+
+    } catch (err) {
+      console.error("Erro ao carregar tipos:", err);
+      alert('Erro ao conectar com o servidor ao buscar tipos de usuário.');
+    }
+  }
+
+  // Função para carregar usuários na tabela
+  async function carregarUsuarios() {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:80/usuarios', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !Array.isArray(data.usuarios)) {
+        console.error('Erro ao carregar usuários:', data);
+        return;
+      }
+
+      todosUsuarios = data.usuarios;
+      usuariosFiltrados = [...todosUsuarios];
+      paginaAtual = 1;
+      atualizarTabela();
+      atualizarPaginacao();
+
+    } catch (err) {
+      console.error("Erro ao carregar usuários:", err);
+      alert('Erro ao conectar com o servidor ao buscar usuários.');
+    }
+  }
+
+  // Função para filtrar usuários pelo nome
+  function filtrarUsuarios(termo) {
+    if (!termo) {
+      usuariosFiltrados = [...todosUsuarios];
+    } else {
+      const termoLower = termo.toLowerCase();
+      usuariosFiltrados = todosUsuarios.filter(usuario => 
+        usuario.strNome.toLowerCase().includes(termoLower)
+      );
+    }
+    paginaAtual = 1;
+    atualizarTabela();
+    atualizarPaginacao();
+  }
+
+  // Função para atualizar a tabela com os usuários filtrados e paginados
+  function atualizarTabela() {
+    const tabela = document.getElementById('tabelaUsuarios');
+    tabela.innerHTML = '';
+
+    if (usuariosFiltrados.length === 0) {
+      tabela.innerHTML = '<tr><td colspan="6" class="text-center">Nenhum usuário encontrado</td></tr>';
+      return;
+    }
+
+    // Calcular índices para paginação
+    const inicio = (paginaAtual - 1) * itensPorPagina;
+    const fim = inicio + itensPorPagina;
+    const usuariosPagina = usuariosFiltrados.slice(inicio, fim);
+
+    // Mapear tipos de usuário para fácil acesso
+    const tiposMap = {};
+    const selectTipos = document.getElementById('tipoUsuario');
+    Array.from(selectTipos.options).forEach(option => {
+      if (option.value) {
+        tiposMap[option.value] = option.text;
+      }
+    });
+
+    usuariosPagina.forEach(usuario => {
+      const row = document.createElement('tr');
+      
+      row.innerHTML = `
+        <td>${usuario.idTblUsuario}</td>
+        <td>${usuario.strNome}</td>
+        <td>${usuario.strEmail}</td>
+        <td>${usuario.strCPF || 'Não informado'}</td>
+        <td>${tiposMap[usuario.TblTipoUsuarios_idTblTipoUsuarios] || 'Desconhecido'}</td>
+        <td class="actions-column">
+          <button class="btn btn-sm btn-primary btn-editar" data-id="${usuario.idTblUsuario}">
+            <i class="bi bi-pencil"></i> Editar
+          </button>
+          <button class="btn btn-sm btn-danger btn-excluir" data-id="${usuario.idTblUsuario}">
+            <i class="bi bi-trash"></i> Excluir
+          </button>
+        </td>
+      `;
+      
+      tabela.appendChild(row);
+    });
+
+    // Adicionar event listeners aos botões
+    document.querySelectorAll('.btn-editar').forEach(btn => {
+      btn.addEventListener('click', () => editarUsuario(btn.dataset.id));
+    });
+
+    document.querySelectorAll('.btn-excluir').forEach(btn => {
+      btn.addEventListener('click', () => confirmarExclusao(btn.dataset.id));
+    });
+  }
+
+  // Função para atualizar a paginação
+  function atualizarPaginacao() {
+    const totalPaginas = Math.ceil(usuariosFiltrados.length / itensPorPagina);
+    const paginacao = document.getElementById('paginacao');
+    paginacao.innerHTML = '';
+
+    if (totalPaginas <= 1) return;
+
+    // Botão Anterior
+    const liAnterior = document.createElement('li');
+    liAnterior.className = `page-item ${paginaAtual === 1 ? 'disabled' : ''}`;
+    liAnterior.innerHTML = `<a class="page-link" href="#" aria-label="Previous" id="paginaAnterior">
+      <span aria-hidden="true">&laquo;</span>
+    </a>`;
+    paginacao.appendChild(liAnterior);
+
+    // Números das páginas
+    for (let i = 1; i <= totalPaginas; i++) {
+      const li = document.createElement('li');
+      li.className = `page-item ${paginaAtual === i ? 'active' : ''}`;
+      li.innerHTML = `<a class="page-link" href="#" data-pagina="${i}">${i}</a>`;
+      paginacao.appendChild(li);
+    }
+
+    // Botão Próximo
+    const liProximo = document.createElement('li');
+    liProximo.className = `page-item ${paginaAtual === totalPaginas ? 'disabled' : ''}`;
+    liProximo.innerHTML = `<a class="page-link" href="#" aria-label="Next" id="paginaProxima">
+      <span aria-hidden="true">&raquo;</span>
+    </a>`;
+    paginacao.appendChild(liProximo);
+
+    // Adicionar event listeners
+    document.querySelectorAll('[data-pagina]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        paginaAtual = parseInt(link.dataset.pagina);
+        atualizarTabela();
+        atualizarPaginacao();
+      });
+    });
+
+    document.getElementById('paginaAnterior').addEventListener('click', (e) => {
+      e.preventDefault();
+      if (paginaAtual > 1) {
+        paginaAtual--;
+        atualizarTabela();
+        atualizarPaginacao();
+      }
+    });
+
+    document.getElementById('paginaProxima').addEventListener('click', (e) => {
+      e.preventDefault();
+      if (paginaAtual < totalPaginas) {
+        paginaAtual++;
+        atualizarTabela();
+        atualizarPaginacao();
+      }
+    });
+  }
+
+  // Função para carregar dados de um usuário específico
+  async function carregarUsuario(idUsuario) {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:80/usuarios/${idUsuario}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.usuario) {
+        console.error('Erro ao carregar usuário:', data);
+        return null;
+      }
+
+      return data.usuario;
+    } catch (err) {
+      console.error("Erro ao carregar usuário:", err);
+      alert('Erro ao conectar com o servidor ao buscar usuário.');
+      return null;
+    }
+  }
+
+  // Função para editar usuário
+  async function editarUsuario(idUsuario) {
+    const usuario = await carregarUsuario(idUsuario);
+    if (usuario) {
+      usuarioAtual = usuario;
+      modoEdicao = true;
+      preencherFormulario(usuario);
+      atualizarUI();
+      
+      // Rolagem suave para o formulário
+      document.querySelector('.form-container').scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+
+  // Função para confirmar exclusão
+  function confirmarExclusao(idUsuario) {
+    usuarioParaExcluir = idUsuario;
+    modalConfirmacao.show();
+  }
+
+  // Função para excluir usuário
+  async function excluirUsuario(idUsuario) {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:80/usuarios/${idUsuario}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.status !== false) {
+        alert('Usuário excluído com sucesso!');
+        await carregarUsuarios();
+        
+        // Se estava editando o usuário excluído, limpa o formulário
+        if (modoEdicao && usuarioAtual && usuarioAtual.idTblUsuario == idUsuario) {
+          limparFormulario();
+        }
+      } else {
+        alert(result.msg || 'Erro ao excluir o usuário.');
+      }
+    } catch (err) {
+      console.error("Erro ao excluir usuário:", err);
+      alert('Erro ao conectar com o servidor.');
+    }
+  }
+
+  // Função para preencher o formulário com dados do usuário
+  function preencherFormulario(usuario) {
+    document.getElementById('idUsuario').value = usuario.idTblUsuario;
+    document.getElementById('nomeUsuario').value = usuario.strNome;
+    document.getElementById('email').value = usuario.strEmail;
+    document.getElementById('cpf').value = usuario.strCPF || '';
+    document.getElementById('tipoUsuario').value = usuario.TblTipoUsuarios_idTblTipoUsuarios;
+    
+    // Senha não é preenchida por questões de segurança
+    document.getElementById('senha').value = '';
+    document.getElementById('senha').required = false;
+  }
+
+  // Função para limpar o formulário
+  function limparFormulario() {
+    document.getElementById('formUsuario').reset();
+    document.getElementById('idUsuario').value = '';
+    document.getElementById('senha').required = true;
+    modoEdicao = false;
+    usuarioAtual = null;
+    atualizarUI();
+  }
+
+  // Função para atualizar a UI conforme o modo (edição/criação)
+  function atualizarUI() {
+    const titulo = document.getElementById('tituloFormulario');
+    const btnSubmit = document.getElementById('btnSubmit');
+    const btnCancelar = document.getElementById('btnCancelar');
+
+    if (modoEdicao) {
+      titulo.textContent = 'Editar Usuário';
+      btnSubmit.textContent = 'Atualizar Usuário';
+      btnCancelar.style.display = 'block';
+    } else {
+      titulo.textContent = 'Criar Novo Usuário';
+      btnSubmit.textContent = 'Criar Usuário';
+      btnCancelar.style.display = 'none';
+    }
+  }
+
+  // Event listener para o formulário
+  document.getElementById('formUsuario').addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    const token = localStorage.getItem('token');
+    const idUsuario = document.getElementById('idUsuario').value;
+    const nome = document.getElementById('nomeUsuario').value;
+    const email = document.getElementById('email').value;
+    const senha = document.getElementById('senha').value;
+    const cpf = document.getElementById('cpf').value;
+    const tipoUsuarioId = document.getElementById('tipoUsuario').value;
+
+    // Validação básica no cliente
+    if (nome.length < 3) {
+      alert('O nome deve ter pelo menos 3 caracteres');
+      return;
+    }
+
+    if (!/^\d{11}$/.test(cpf)) {
+      alert('CPF deve conter exatamente 11 dígitos');
+      return;
+    }
+
+    // Preparar payload no formato esperado pelo backend
+    const payload = {
+      usuario: {
+        nomeUsuario: nome,
+        email: email,
+        cpf: cpf,
+        senha: senha,
+        tipoUsuario: {
+          idTblTipoUsuarios: parseInt(tipoUsuarioId)
+        }
+      }
+    };
+
+    try {
+      let url = 'http://localhost:80/usuarios';
+      let method = 'POST';
+      
+      if (modoEdicao && idUsuario) {
+        console.log("uriel:" +  JSON.stringify(payload) )
+        url += `/${idUsuario}`;
+        method = 'PUT';
+      }
+
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.status !== false) {
+        alert(modoEdicao ? 'Usuário atualizado com sucesso!' : 'Usuário criado com sucesso!');
+        limparFormulario();
+        await carregarUsuarios();
+      } else {
+        alert(result.msg || (modoEdicao ? 'Erro ao atualizar usuário.' : 'Erro ao criar usuário.'));
+      }
+    } catch (err) {
+      console.error("Erro ao enviar formulário:", err);
+      alert('Erro ao conectar com o servidor.');
+    }
+  });
+
+  // Event listener para o botão de cancelar
+  document.getElementById('btnCancelar').addEventListener('click', function() {
+    limparFormulario();
+  });
+
+  // Event listener para o botão de confirmar exclusão
+  document.getElementById('btnConfirmarExclusao').addEventListener('click', function() {
+    if (usuarioParaExcluir) {
+      excluirUsuario(usuarioParaExcluir);
+      modalConfirmacao.hide();
+      usuarioParaExcluir = null;
+    }
+  });
+
+  // Event listener para o botão de busca
+  document.getElementById('btnBuscar').addEventListener('click', function() {
+    const termo = document.getElementById('inputBusca').value.trim();
+    filtrarUsuarios(termo);
+  });
+
+  // Event listener para limpar busca
+  document.getElementById('btnLimparBusca').addEventListener('click', function() {
+    document.getElementById('inputBusca').value = '';
+    filtrarUsuarios('');
+  });
+
+  // Event listener para buscar ao pressionar Enter
+  document.getElementById('inputBusca').addEventListener('keyup', function(e) {
+    if (e.key === 'Enter') {
+      const termo = this.value.trim();
+      filtrarUsuarios(termo);
+    }
+  });
+
+  // Event listener para o botão Voltar
+  document.getElementById('btnVoltar').addEventListener('click', voltarAoMenu);
+
+  // Executa as funções ao carregar a página
+  window.addEventListener('DOMContentLoaded', function() {
+    carregarTiposDeUsuario();
+    carregarUsuarios();
+  });
+</script>
+</body>
+</html>
