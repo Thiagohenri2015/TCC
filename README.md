@@ -123,5 +123,5 @@ Antes de começar, você vai precisar ter instalado em sua máquina:
 ### 1. Clone o repositório
 
 ```bash
-git clone https://github.com/seu-usuario/controle-estoque.git
+git clone https://github.com/Thiagohenri2015/TCC.git
 cd controle-estoque
